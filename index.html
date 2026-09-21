@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orbital</title>
+    <meta name="description" content="Live ISS tracker and NASA daily image archive." />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Orbital" />
+    <meta property="og:description" content="A live ISS tracker and NASA daily image archive." />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Orbital" />
+    <meta name="twitter:description" content="A live ISS tracker and NASA daily image archive." />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Applied synchronously so an explicit saved theme paints immediately, before any flash of the default.
+      (function () {
+        try {
+          var stored = localStorage.getItem('orbital-theme');
+          if (stored === 'light' || stored === 'dark') {
+            document.documentElement.setAttribute('data-theme', stored);
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="starfield" aria-hidden="true"></div>
+
+    <div id="app">
+      <header id="app-header">
+        <div class="navbar-pill">
+          <button type="button" class="nav-logo" aria-label="Orbital">
+            <svg class="nav-logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="12" r="5"></circle>
+              <ellipse cx="11" cy="12" rx="10" ry="3.2" transform="rotate(-18 11 12)"></ellipse>
+              <circle cx="20" cy="5" r="1" fill="currentColor" stroke="none"></circle>
+            </svg>
+          </button>
+
+          <nav id="view-switcher" class="navbar-links" role="tablist" aria-label="Views">
+            <button
+              type="button"
+              class="tab navbar-tab active"
+              role="tab"
+              id="tab-tracker"
+              aria-selected="true"
+              aria-controls="view-tracker"
+              data-view="tracker"
+            >
+              <span class="tab-pulse" id="tracker-pulse" aria-hidden="true"></span>
+              Live Tracker
+            </button>
+            <button
+              type="button"
+              class="tab navbar-tab"
+              role="tab"
+              id="tab-gallery"
+              aria-selected="false"
+              aria-controls="view-gallery"
+              data-view="gallery"
+            >
+              Daily Image
+            </button>
+          </nav>
+
+          <div class="theme-toggle" role="group" aria-label="Theme">
+            <button type="button" class="theme-btn" data-theme-choice="light" aria-pressed="false" aria-label="Light theme">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="4"></line>
+                <line x1="12" y1="20" x2="12" y2="22"></line>
+                <line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line>
+                <line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line>
+                <line x1="2" y1="12" x2="4" y2="12"></line>
+                <line x1="20" y1="12" x2="22" y2="12"></line>
+                <line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line>
+                <line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>
+              </svg>
+            </button>
+            <button type="button" class="theme-btn" data-theme-choice="system" aria-pressed="true" aria-label="Match system theme">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="14" rx="1"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="18" x2="12" y2="21"></line>
+              </svg>
+            </button>
+            <button type="button" class="theme-btn" data-theme-choice="dark" aria-pressed="false" aria-label="Dark theme">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section id="view-tracker" class="view active" role="tabpanel" aria-labelledby="tab-tracker">
+          <div class="map-card">
+            <div class="map-card-header">
+              <span class="map-card-title">ISS Position</span>
+              <div class="map-card-controls">
+                <button type="button" id="tracker-zoom-out" class="nav-btn" aria-label="Zoom out">&minus;</button>
+                <button type="button" id="tracker-zoom-in" class="nav-btn" aria-label="Zoom in">&#43;</button>
+                <button type="button" id="tracker-recenter" class="nav-btn" aria-label="Recenter on ISS">&#8982;</button>
+                <button type="button" id="tracker-refresh" class="nav-btn" aria-label="Refresh position now">&#10227;</button>
+              </div>
+            </div>
+            <div class="map-card-body">
+              <div id="map"></div>
+            </div>
+            <div id="telemetry-panel">
+              <div class="telemetry-status" id="telemetry-status">
+                <span class="status-dot" id="status-dot" aria-hidden="true"></span>
+                <span id="status-text">Acquiring signal&hellip;</span>
+              </div>
+              <dl class="telemetry-grid">
+                <div class="telemetry-item">
+                  <dt>Latitude</dt>
+                  <dd id="tm-lat">&mdash;</dd>
+                </div>
+                <div class="telemetry-item">
+                  <dt>Longitude</dt>
+                  <dd id="tm-lon">&mdash;</dd>
+                </div>
+                <div class="telemetry-item">
+                  <dt>Altitude</dt>
+                  <dd id="tm-alt">&mdash;</dd>
+                </div>
+                <div class="telemetry-item">
+                  <dt>Velocity</dt>
+                  <dd id="tm-vel">&mdash;</dd>
+                </div>
+                <div class="telemetry-item">
+                  <dt>Visibility</dt>
+                  <dd id="tm-vis">&mdash;</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="crew-card">
+            <div class="crew-card-header">
+              <span class="crew-card-title">Crew Aboard ISS</span>
+              <span class="crew-count" id="crew-count">&mdash;</span>
+            </div>
+            <p class="crew-status" id="crew-status">Loading crew roster&hellip;</p>
+            <ul class="crew-list" id="crew-list" hidden></ul>
+          </div>
+        </section>
+
+        <section id="view-gallery" class="view" role="tabpanel" aria-labelledby="tab-gallery" hidden>
+          <div class="gallery-layout">
+            <div class="gallery-nav">
+              <button type="button" id="gallery-prev" class="nav-btn" aria-label="Previous day">&larr;</button>
+              <input type="date" id="gallery-date" />
+              <button type="button" id="gallery-next" class="nav-btn" aria-label="Next day">&rarr;</button>
+              <button type="button" id="gallery-fav" class="nav-btn fav-btn" aria-label="Save this day" aria-pressed="false">&#9733;</button>
+            </div>
+
+            <div id="gallery-status" class="gallery-status" hidden></div>
+
+            <article id="gallery-card" class="gallery-card" hidden>
+              <div class="frame">
+                <div id="gallery-media"></div>
+              </div>
+              <div class="gallery-copy">
+                <h1 id="gallery-title"></h1>
+                <p class="gallery-meta" id="gallery-meta"></p>
+                <p id="gallery-explanation"></p>
+              </div>
+            </article>
+
+            <div class="thumb-strip" id="thumb-strip"></div>
+          </div>
+        </section>
+      </main>
+
+      <footer id="app-footer">
+        <div class="footer-card">
+          <div class="footer-top">
+            <div class="footer-about">
+              <div class="footer-brand">
+                <span class="footer-logo" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="12" r="5"></circle>
+                    <ellipse cx="11" cy="12" rx="10" ry="3.2" transform="rotate(-18 11 12)"></ellipse>
+                    <circle cx="20" cy="5" r="1" fill="currentColor" stroke="none"></circle>
+                  </svg>
+                </span>
+                <span class="footer-name">Orbital</span>
+              </div>
+              <p class="footer-desc">
+                A live ISS tracker and NASA daily image archive &mdash; Project built by Mazhar Sourav.
+              </p>
+              <div class="footer-social">
+                <a class="social-btn" href="https://www.linkedin.com/in/mazharsourav" target="_blank" rel="noopener" aria-label="LinkedIn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"></path>
+                  </svg>
+                </a>
+                <a class="social-btn" href="https://github.com/mazharsourav" target="_blank" rel="noopener" aria-label="GitHub">
+                  <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+                  </svg>
+                </a>
+                <a class="social-btn" href="https://mazharsourav.me" target="_blank" rel="noopener" aria-label="Portfolio">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <div class="footer-groups">
+              <div class="footer-group">
+                <span class="footer-group-title">Explore</span>
+                <button type="button" class="tab footer-nav-link" data-view="tracker">Live Tracker</button>
+                <button type="button" class="tab footer-nav-link" data-view="gallery">Daily Image</button>
+              </div>
+              <div class="footer-group">
+                <span class="footer-group-title">Data sources</span>
+                <a href="https://wheretheiss.at" target="_blank" rel="noopener">wheretheiss.at</a>
+                <a href="https://api.nasa.gov" target="_blank" rel="noopener">api.nasa.gov</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-bottom">
+            <span>&copy; 2026 Orbital. Built by Mazhar Sourav.</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
