@@ -1,6 +1,6 @@
 # Orbital
 
-A live ISS tracker and a NASA Astronomy Picture of the Day (APOD) browser on one page, switched by a tab in the header. Built as a one-day portfolio project.
+A live ISS tracker and a NASA Astronomy Picture of the Day (APOD) browser on one page, switched by a tab in the header.
 
 **Live demo: [orbital-beta-green.vercel.app](https://orbital-beta-green.vercel.app/)** — deployed on Vercel, so everything works there, including the live crew roster of who's currently aboard the ISS.
 
@@ -99,8 +99,6 @@ npm run preview   # serve the production build locally
 The project is live at **[orbital-beta-green.vercel.app](https://orbital-beta-green.vercel.app/)**, deployed from this repo's `main` branch.
 
 **Vercel is required** for the crew card to show live data (see [Crew data](#crew-data)). The tracker and gallery are plain static output and would work on any static host (Netlify, GitHub Pages, etc.), but the crew card would show its fallback state there without an equivalent serverless function.
-
-To deploy your own copy: import the repo into Vercel (it auto-detects Vite — no config file needed) and set `VITE_NASA_API_KEY` as a project environment variable. Vite inlines it into the build at build time. `api/crew.ts` needs no env vars of its own.
 
 **Local dev note:** `npm run dev` (plain Vite) does not run `api/crew.ts` as a server function — it just serves the raw source file, so the crew card shows its fallback locally by design. To actually see it working before deploying, use `vercel dev` instead (requires the Vercel CLI and `vercel link`).
 
